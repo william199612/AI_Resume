@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnalyzeResponse } from "@/types/analyze";
+import ResultsPanel from "@/components/ResultsPanel";
 
 export default function Home() {
     const [file, setFile] = useState<File | null>(null);
@@ -9,6 +10,19 @@ export default function Home() {
     const [useJobDescription, setUseJobDescription] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<AnalyzeResponse | null>(null);
+    const [history, setHistory] = useState<{ ts: number; score: number }[]>([]);
+
+    useEffect(() => {
+        const raw = localStorage.getItem("analysis_history");
+        if (raw) setHistory(JSON.parse(raw));
+    }, []);
+    const pushHistory = (score: number | null) => {
+        if (score === null || score === undefined) return;
+        const entry = { ts: Date.now(), score };
+        const next = [...history, entry].slice(-20); // keep last 20
+        setHistory(next);
+        localStorage.setItem("analysis_history", JSON.stringify(next));
+    };
 
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.length) setFile(e.target.files[0]);
@@ -45,154 +59,80 @@ export default function Home() {
 
     return (
         <main className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-6">
-            <div className="max-w-2xl w-full bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
+            <div className="max-w-5xl w-full bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
                 <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
                     Smart Resume Analyzer
                 </h1>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5 w-full max-w-xl mx-auto"
+                >
+                    {/* --- Upload Resume --- */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Upload Resume (PDF/DOCX)
-                        </label>
-                        <input
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={handleUpload}
-                            className="w-full border border-gray-300 p-2 rounded-lg"
-                            required
-                        />
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                        <input
-                            type="checkbox"
-                            checked={useJobDescription}
-                            onChange={(e) =>
-                                setUseJobDescription(e.target.checked)
-                            }
-                        />
-                        <label className="text-sm text-gray-700">
-                            Include Job Description
-                        </label>
-                    </div>
-
-                    {useJobDescription && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Job Description
-                            </label>
-                            <textarea
-                                value={jobDescription}
-                                onChange={(e) =>
-                                    setJobDescription(e.target.value)
-                                }
-                                rows={4}
-                                className="w-full border border-gray-300 p-2 rounded-lg"
-                                placeholder="Paste job description here..."
+                        <h2 className="block font-medium text-gray-700 mb-2">
+                            Upload Resume
+                        </h2>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="file"
+                                id="resumeFile"
+                                accept=".pdf,.doc,.docx"
+                                onChange={handleUpload}
+                                className="hidden"
                             />
-                        </div>
-                    )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
-                    >
-                        {loading ? "Analyzing..." : "Analyze Resume"}
-                    </button>
+                            <label
+                                htmlFor="resumeFile"
+                                className="px-3 py-1.5 border border-gray-500 rounded-md text-gray-700 text-sm cursor-pointer hover:bg-gray-100 transition font-medium"
+                            >
+                                {file ? "Change File" : "Choose File"}
+                            </label>
+
+                            {file && (
+                                <span className="text-sm text-gray-700 truncate max-w-[150px]">
+                                    {file.name}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* --- Job Description --- */}
+                    <div>
+                        <h2 className="block font-medium text-gray-700 mb-2">
+                            (Optional) Enter Your Job Description
+                        </h2>
+                        <textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            rows={4}
+                            className="w-full border border-gray-300 p-2 rounded-lg"
+                            placeholder="Paste job description here (optional)..."
+                        />
+                    </div>
+
+                    {/* --- Analyze Button --- */}
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-60"
+                        >
+                            {loading ? "Analyzing..." : "Analyze Resume"}
+                        </button>
+                    </div>
                 </form>
 
-                {/* Results Section */}
-                {result && (
-                    <div className="mt-10 space-y-6">
-                        <h2 className="text-2xl font-semibold text-gray-800">
-                            Analysis Result
-                        </h2>
-
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                            <p className="font-semibold">Summary:</p>
-                            <p className="text-gray-700">
-                                {result.resume_summary}
-                            </p>
+                <div className="mt-8">
+                    {result ? (
+                        <ResultsPanel result={result} history={history} />
+                    ) : (
+                        <div className="text-center text-gray-500">
+                            Upload a resume and optionally a job description to
+                            analyze.
                         </div>
-
-                        <div className="bg-gray-50 p-4 rounded-lg border">
-                            <p className="font-semibold">Extracted Skills:</p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {result.extracted_skills?.length ? (
-                                    result.extracted_skills.map(
-                                        (skill, idx) => (
-                                            <span
-                                                key={idx}
-                                                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                                            >
-                                                {skill}
-                                            </span>
-                                        )
-                                    )
-                                ) : (
-                                    <p className="text-gray-500">
-                                        No skills detected.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {result.match_score !== null && (
-                            <div className="bg-gray-50 p-4 rounded-lg border">
-                                <p className="font-semibold">Match Score:</p>
-                                <p className="text-2xl font-bold text-blue-700">
-                                    {(result.match_score * 100).toFixed(1)}%
-                                </p>
-                            </div>
-                        )}
-
-                        {result.ai_suggestions && (
-                            <div className="bg-gray-50 p-4 rounded-lg border space-y-2">
-                                <p className="font-semibold text-gray-800">
-                                    AI Suggestions:
-                                </p>
-
-                                {result.ai_suggestions.missing_keywords && (
-                                    <div>
-                                        <p className="font-medium text-gray-700">
-                                            Missing Keywords:
-                                        </p>
-                                        <ul className="list-disc list-inside text-gray-600">
-                                            {result.ai_suggestions.missing_keywords.map(
-                                                (k, i) => (
-                                                    <li key={i}>{k}</li>
-                                                )
-                                            )}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {result.ai_suggestions.improvement_areas && (
-                                    <div>
-                                        <p className="font-medium text-gray-700">
-                                            Improvement Areas:
-                                        </p>
-                                        <ul className="list-disc list-inside text-gray-600">
-                                            {result.ai_suggestions.improvement_areas.map(
-                                                (a, i) => (
-                                                    <li key={i}>{a}</li>
-                                                )
-                                            )}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {result.ai_suggestions.summary && (
-                                    <p className="italic text-gray-600">
-                                        {result.ai_suggestions.summary}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </main>
     );
