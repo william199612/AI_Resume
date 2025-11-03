@@ -6,13 +6,6 @@ export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
 
-        // Extract fields from form data
-        const useJobDescription =
-            formData.get("use_job_description") === "true";
-        const jobDescription = useJobDescription
-            ? formData.get("job_description")?.toString() ?? ""
-            : "";
-
         // Forward file and job description to FastAPI
         const backendRes = await fetch("http://localhost:8000/api/analyze", {
             method: "POST",

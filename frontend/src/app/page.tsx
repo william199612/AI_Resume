@@ -7,7 +7,6 @@ import ResultsPanel from "@/components/ResultsPanel";
 export default function Home() {
     const [file, setFile] = useState<File | null>(null);
     const [jobDescription, setJobDescription] = useState("");
-    const [useJobDescription, setUseJobDescription] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<AnalyzeResponse | null>(null);
     const [history, setHistory] = useState<{ ts: number; score: number }[]>([]);
@@ -16,6 +15,7 @@ export default function Home() {
         const raw = localStorage.getItem("analysis_history");
         if (raw) setHistory(JSON.parse(raw));
     }, []);
+
     const pushHistory = (score: number | null) => {
         if (score === null || score === undefined) return;
         const entry = { ts: Date.now(), score };
@@ -34,8 +34,7 @@ export default function Home() {
 
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("use_job_description", String(useJobDescription));
-        if (useJobDescription && jobDescription) {
+        if (jobDescription) {
             formData.append("job_description", jobDescription);
         }
 
@@ -84,7 +83,7 @@ export default function Home() {
 
                             <label
                                 htmlFor="resumeFile"
-                                className="px-3 py-1.5 border border-gray-500 rounded-md text-gray-700 text-sm cursor-pointer hover:bg-gray-100 transition font-medium"
+                                className="px-3 py-1.5 border border-blue-500 rounded-md text-blue-700 text-sm cursor-pointer hover:bg-gray-100 transition font-medium"
                             >
                                 {file ? "Change File" : "Choose File"}
                             </label>
@@ -100,7 +99,7 @@ export default function Home() {
                     {/* --- Job Description --- */}
                     <div>
                         <h2 className="block font-medium text-gray-700 mb-2">
-                            (Optional) Enter Your Job Description
+                            Desired Job Description (Optional)
                         </h2>
                         <textarea
                             value={jobDescription}

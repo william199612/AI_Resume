@@ -5,9 +5,10 @@ export interface AISuggestions {
 }
 
 export interface AnalyzeResponse {
-    resume_summary?: string;
-    extracted_skills?: string[];
+    summary: string;
+    extracted_skills: string[];
+    improvement_areas: string[];
+    missing_keywords: string[];
     match_score?: number | null;
-    ai_suggestions?: AISuggestions | null;
     status?: string;
 }
