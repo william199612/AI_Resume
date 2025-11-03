@@ -153,9 +153,9 @@ Uploads a resume and optional job description for AI analysis.
 | ----- | ------------------------------------------- | -------------- |
 | 1     | Backend with FastAPI + AI integration       | ✅ Completed   |
 | 2     | Frontend (Next.js) basic UI                 | ✅ Completed   |
-| 3     | Visual feedback (charts, word clouds, etc.) | 🚧 In Progress |
-| 4     | Resume rewrite / optimization module        | 🧠 Planned     |
-| 5     | User accounts + resume history              | 🗂️ Planned     |
+| 3     | Visual feedback (charts, word clouds, etc.) | ✅ Completed   |
+| 4     | Resume rewrite / optimization module        | 🚧 In Progress |
+| 5     | User accounts + resume history              | 🧠 Planned     |
 
 --
 

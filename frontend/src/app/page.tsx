@@ -105,7 +105,7 @@ export default function Home() {
                             value={jobDescription}
                             onChange={(e) => setJobDescription(e.target.value)}
                             rows={4}
-                            className="w-full border border-gray-300 p-2 rounded-lg"
+                            className="w-full border border-gray-300 p-2 rounded-lg mt-3 text-gray-500"
                             placeholder="Paste job description here (optional)..."
                         />
                     </div>
