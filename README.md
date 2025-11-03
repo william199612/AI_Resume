@@ -54,7 +54,7 @@ When no JD is provided, the app still analyzes and improves the resume independe
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/ai_resume.git
+git clone https://github.com/william199612/ai_resume.git
 cd ai_resume
 ```
 
