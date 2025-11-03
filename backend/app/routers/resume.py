@@ -6,11 +6,12 @@ from app.services.text_extractor import extract_text
 from app.services.nlp_processor import analyze_text
 from app.services.similarity import compute_similarity
 from app.services.ai import suggest_improvements, rewrite_resume
+from app.schemas.resume import AnalyzeResponse
 
 
 router = APIRouter()
 
-@router.post("/analyze")
+@router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_resume(
         file: UploadFile,
         job_description: Optional[str] = Form(None),

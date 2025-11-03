@@ -3,6 +3,7 @@ import re
 import json
 from google import genai
 
+from app.core.logging import logger
 from app.utils.file import read_file
 
 client = genai.Client(api_key=os.getenv("GENAI_API_KEY"))
@@ -57,12 +58,15 @@ def suggest_improvements(resume_text: str, job_description: str) -> dict:
         {resume_text}
         """
 
-    response = client.models.generate_content(
-        model=os.getenv("GENAI_MODEL", "gemini-2.5-flash-lite"),
-        contents=full_prompt
-    )
-    print("Gemini response:", response.text)
-    return _safe_json_parse(response.text)  # type: ignore
+    try:
+        response = client.models.generate_content(
+            model=os.getenv("GENAI_MODEL", "gemini-2.5-flash-lite"),
+            contents=full_prompt
+        )
+        return _safe_json_parse(response.text)  # type: ignore
+    except Exception as e:
+        logger.error(f"Gemini API Error: {e}")
+        return {"error": "AI analysis failed, please try again."}
 
 
 def rewrite_resume(resume_text: str, target_role: str) -> dict:
@@ -87,9 +91,12 @@ def rewrite_resume(resume_text: str, target_role: str) -> dict:
     {target_role}
     """
     
-    response = client.models.generate_content(
-        model=os.getenv("GENAI_MODEL", "gemini-2.5-flash-lite"),
-        contents=full_prompt
-    )
-    
-    return _safe_json_parse(response.text) # type: ignore
+    try:
+        response = client.models.generate_content(
+            model=os.getenv("GENAI_MODEL", "gemini-2.5-flash-lite"),
+            contents=full_prompt
+        )
+        return _safe_json_parse(response.text)  # type: ignore
+    except Exception as e:
+        logger.error(f"Gemini API Error: {e}")
+        return {"error": "AI analysis failed, please try again."}
