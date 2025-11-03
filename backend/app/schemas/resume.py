@@ -9,5 +9,6 @@ class AnalyzeRequest(BaseModel):
 class AnalyzeResponse(BaseModel):
     match_score: float | None
     extracted_skills: List[str]
-    resume_summary: str
-    ai_suggestions: dict
+    summary: str
+    improvement_areas: List[str]
+    missing_keywords: List[str]

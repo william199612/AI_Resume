@@ -3,8 +3,6 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, Form
 
 from app.services.text_extractor import extract_text
-from app.services.nlp_processor import analyze_text
-from app.services.similarity import compute_similarity
 from app.services.ai import suggest_improvements, rewrite_resume
 from app.schemas.resume import AnalyzeResponse
 
@@ -14,8 +12,7 @@ router = APIRouter()
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_resume(
         file: UploadFile,
-        job_description: Optional[str] = Form(None),
-        use_job_description: bool = Form(False)
+        job_description: Optional[str] = Form(None)
     ):
     """
     Analyze uploaded resume, optionally with job description.
@@ -25,21 +22,15 @@ async def analyze_resume(
     # 1. Extract text from resume
     resume_text = extract_text(file)
 
-    # 2. NLP analysis (skills, experience)
-    resume_entities = analyze_text(resume_text)
-
-    # 3. Conditional similarity
+    # 2. Conditional similarity
     ai_suggestions = suggest_improvements(resume_text, job_description or "")
-    match_score = None
-    
-    if use_job_description and job_description:
-        match_score = compute_similarity(resume_text, job_description)
     
     response = {
-        "resume_summary": resume_entities.get("summary"),
-        "extracted_skills": resume_entities.get("skills", []),
-        "match_score": round(match_score, 2) if match_score else None,
-        "ai_suggestions": ai_suggestions,
+        "summary": ai_suggestions.get("summary", "No summary available"),
+        "extracted_skills": ai_suggestions.get("extracted_skills", []),
+        "match_score": ai_suggestions.get("match_score", None),
+        "improvement_areas": ai_suggestions.get("improvement_areas", []),
+        "missing_keywords": ai_suggestions.get("missing_keywords", []),
         "status": "completed"
     }
 

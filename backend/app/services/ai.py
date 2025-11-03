@@ -32,9 +32,11 @@ def suggest_improvements(resume_text: str, job_description: str) -> dict:
     Uses Gemini to analyze resume and JD, then return structured suggestions.
     Output format (strict JSON):
     {
+        "extracted_skills": [...],
         "missing_keywords": [...],
         "improvement_areas": [...],
-        "summary": "..."
+        "summary": "...",
+        "match_score": 100
     }
     """
     if job_description and job_description.strip():
