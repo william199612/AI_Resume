@@ -29,9 +29,10 @@ When no JD is provided, the app still analyzes and improves the resume independe
 -   Missing keywords
 -   Improvement areas
 -   Match score (if JD is provided)
--   Summary feedback  
-    ✅ Clean **Next.js frontend** with Tailwind UI  
-    ✅ Real-time AI feedback and charts (coming soon in Phase 3)
+-   Summary feedback
+
+✅ Clean **Next.js frontend** with Tailwind UI  
+✅ Real-time AI feedback and charts (coming soon in Phase 3)
 
 ---
 
@@ -39,52 +40,14 @@ When no JD is provided, the app still analyzes and improves the resume independe
 
 | Layer                 | Technology                                          |
 | --------------------- | --------------------------------------------------- |
-| **Frontend**          | Next.js 15 (App Router) + TypeScript + Tailwind CSS |
-| **Backend**           | FastAPI (Python 3.11)                               |
+| **Frontend**          | Next.js 16 (App Router) + TypeScript + Tailwind CSS |
+| **Backend**           | FastAPI (Python 3.13)                               |
 | **AI Engine**         | Google Gemini API (`google-genai` SDK)              |
 | **File Parsing**      | `docx2txt`, `PyPDF2`                                |
 | **Data Interchange**  | JSON (REST API)                                     |
 | **Development Tools** | ESLint, dotenv, uvicorn, nodemon                    |
 
 ---
-
-## ⚙️ Project Structure
-
-```
-ai_resume/
-│
-├── backend/
-│ ├── app/
-│ │ ├── main.py
-│ │ ├── routers/
-│ │ │ └── resume.py
-│ │ ├── services/
-│ │ │ └── ai.py
-│ │ ├── utils/
-│ │ │ ├── file.py
-│ │ │ └── text.py
-│ │ ├── prompts/
-│ │ │ └── resume_improve.txt
-│ │ └── models/
-│ │ └── response.py
-│ ├── requirements.txt
-│ └── venv/
-│
-├── frontend/
-│ ├── src/
-│ │ ├── app/
-│ │ │ ├── api/analyze/route.ts
-│ │ │ └── page.tsx
-│ │ ├── components/
-│ │ │ └── ResultsPanel.tsx
-│ │ └── types/
-│ │ └── analyze.ts
-│ ├── package.json
-│ ├── tsconfig.json
-│ └── tailwind.config.ts
-│
-└── README.md
-```
 
 ## 🧰 Installation & Setup
 
@@ -133,6 +96,8 @@ The app will run at:
 👉 Frontend: http://localhost:3000  
 👉 Backend: http://localhost:8000
 
+--
+
 ## 🧱 API Specification
 
 ### **POST** `/api/analyze`
@@ -145,11 +110,10 @@ Uploads a resume and optional job description for AI analysis.
 
 **Content-Type:** `multipart/form-data`
 
-| Field                 | Type    | Required | Description                                        |
-| --------------------- | ------- | -------- | -------------------------------------------------- |
-| `file`                | File    | ✅       | Resume file (`.pdf` / `.docx`)                     |
-| `job_description`     | String  | ❌       | Job description text                               |
-| `use_job_description` | Boolean | ❌       | Whether to include job description in the analysis |
+| Field             | Type   | Required | Description                    |
+| ----------------- | ------ | -------- | ------------------------------ |
+| `file`            | File   | ✅       | Resume file (`.pdf` / `.docx`) |
+| `job_description` | String | ❌       | Job description text           |
 
 ---
 
@@ -169,6 +133,8 @@ Uploads a resume and optional job description for AI analysis.
 }
 ```
 
+--
+
 ## 🎨 Frontend Features
 
 -   🗂️ Intuitive upload UI
@@ -179,6 +145,8 @@ Uploads a resume and optional job description for AI analysis.
     -   AI-generated feedback list
 -   💻 Fully responsive Tailwind CSS design
 
+--
+
 ## 🧭 Roadmap
 
 | Phase | Feature                                     | Status         |
@@ -188,6 +156,8 @@ Uploads a resume and optional job description for AI analysis.
 | 3     | Visual feedback (charts, word clouds, etc.) | 🚧 In Progress |
 | 4     | Resume rewrite / optimization module        | 🧠 Planned     |
 | 5     | User accounts + resume history              | 🗂️ Planned     |
+
+--
 
 ## 🛡️ License
 
