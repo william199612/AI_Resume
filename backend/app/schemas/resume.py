@@ -7,7 +7,7 @@ class AnalyzeRequest(BaseModel):
     job_description: Optional[str] = None
 
 class AnalyzeResponse(BaseModel):
-    match_score: float
+    match_score: float | None
     extracted_skills: List[str]
     resume_summary: str
     ai_suggestions: dict
