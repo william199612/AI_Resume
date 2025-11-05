@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, Form
 
 from app.services.text_extractor import extract_text
 from app.services.ai import suggest_improvements, rewrite_resume
-from app.schemas.resume import AnalyzeResponse
+from app.schemas.resume import AnalyzeResponse, RewriteResponse, ContactInfo
 
 
 router = APIRouter()
@@ -36,16 +36,30 @@ async def analyze_resume(
 
     return response
 
-
-@router.post("/improve")
-async def improve_resume(file: UploadFile, job_description: str = Form(...)):
-    resume_text = extract_text(file)
-    suggestions = suggest_improvements(resume_text, job_description)
-    return suggestions
-
-
-@router.post("/rewrite")
+@router.post("/rewrite", response_model=RewriteResponse)
 async def rewrite_resume_for_role(file: UploadFile, target_role: str = Form(...)):
+    """
+    Rewrite uploaded resume for a specific job role.
+    """
     resume_text = extract_text(file)
     rewritten = rewrite_resume(resume_text, target_role)
-    return {"target_role": target_role, "rewritten_resume": rewritten}
+    
+    contact_info = rewritten.get("contact_info", {})
+    
+    structured_resume = RewriteResponse(
+        contact_info=ContactInfo(
+            name=contact_info.get("name", ""),
+            phone=contact_info.get("phone", ""),
+            email=contact_info.get("email", ""),
+            address=contact_info.get("address", ""),
+            linkedin=contact_info.get("linkedin", "")
+        ),
+        summary=rewritten.get("summary", "Summary section could not be extracted."),
+        experience=rewritten.get("experience", []),
+        education=rewritten.get("education", []),
+        skills=rewritten.get("skills", []),
+        projects=rewritten.get("projects", []),
+        full_text=rewritten.get("full_text", "Rewrite cannot be completed.")
+    )
+    
+    return structured_resume
