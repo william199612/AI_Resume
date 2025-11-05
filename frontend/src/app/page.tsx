@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnalyzeResponse } from "@/types/analyze";
-import ResultsPanel from "@/components/ResultsPanel";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
-    const [jobDescription, setJobDescription] = useState("");
+    const [jobDescription, setJobDescription] = useState<string>("");
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<AnalyzeResponse | null>(null);
+
     const [history, setHistory] = useState<{ ts: number; score: number }[]>([]);
 
     useEffect(() => {
@@ -16,16 +16,22 @@ export default function Home() {
         if (raw) setHistory(JSON.parse(raw));
     }, []);
 
-    const pushHistory = (score: number | null) => {
-        if (score === null || score === undefined) return;
-        const entry = { ts: Date.now(), score };
-        const next = [...history, entry].slice(-20); // keep last 20
-        setHistory(next);
-        localStorage.setItem("analysis_history", JSON.stringify(next));
-    };
-
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.length) setFile(e.target.files[0]);
+        const selectedFile = e.target.files?.[0];
+        if (selectedFile) {
+            setFile(selectedFile);
+
+            // Save file metadata for resume_analyze
+            localStorage.setItem("resume_file_name", selectedFile.name);
+
+            // Convert to Base64 and store
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64Data = (reader.result as string).split(",")[1];
+                localStorage.setItem("resume_file_data", base64Data);
+            };
+            reader.readAsDataURL(selectedFile);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +53,29 @@ export default function Home() {
 
             if (!res.ok) throw new Error("Failed to analyze resume.");
             const data = await res.json();
-            setResult(data);
+
+            // Save data temporarily for the analyze page
+            const id = Date.now().toString();
+            localStorage.setItem(`analyze_${id}`, JSON.stringify(data));
+
+            // Save target role in localStorage (if user entered job description)
+            if (jobDescription) {
+                localStorage.setItem(`target_role_${id}`, jobDescription);
+            }
+
+            // Update history for home page persistence
+            const nextHistory = [
+                ...history,
+                { ts: Date.now(), score: 0 },
+            ].slice(-20);
+            setHistory(nextHistory);
+            localStorage.setItem(
+                "analysis_history",
+                JSON.stringify(nextHistory)
+            );
+
+            // Navigate to analyze page
+            router.push(`/resume_analyze?id=${id}`);
         } catch (err) {
             console.error(err);
             alert("Error analyzing resume. Please try again.");
@@ -58,6 +86,16 @@ export default function Home() {
 
     return (
         <main className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-6">
+            {/* Loading Overlay */}
+            {loading && (
+                <div className="fixed inset-0 bg-white/70 flex items-center justify-center z-50">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+                    <p className="ml-3 text-blue-700 font-semibold">
+                        Processing...
+                    </p>
+                </div>
+            )}
+
             <div className="max-w-5xl w-full bg-white p-8 shadow-xl rounded-2xl border border-gray-100">
                 <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
                     Smart Resume Analyzer
@@ -80,14 +118,12 @@ export default function Home() {
                                 onChange={handleUpload}
                                 className="hidden"
                             />
-
                             <label
                                 htmlFor="resumeFile"
                                 className="px-3 py-1.5 border border-blue-500 rounded-md text-blue-700 text-sm cursor-pointer hover:bg-gray-100 transition font-medium"
                             >
                                 {file ? "Change File" : "Choose File"}
                             </label>
-
                             {file && (
                                 <span className="text-sm text-gray-700 truncate max-w-[150px]">
                                     {file.name}
@@ -105,7 +141,7 @@ export default function Home() {
                             value={jobDescription}
                             onChange={(e) => setJobDescription(e.target.value)}
                             rows={4}
-                            className="w-full border border-gray-300 p-2 rounded-lg mt-3 text-gray-500"
+                            className="w-full border border-gray-300 p-2 rounded-lg mt-3 text-gray-600 bg-gray-50 focus:bg-white"
                             placeholder="Paste job description here (optional)..."
                         />
                     </div>
@@ -121,17 +157,6 @@ export default function Home() {
                         </button>
                     </div>
                 </form>
-
-                <div className="mt-8">
-                    {result ? (
-                        <ResultsPanel result={result} history={history} />
-                    ) : (
-                        <div className="text-center text-gray-500">
-                            Upload a resume and optionally a job description to
-                            analyze.
-                        </div>
-                    )}
-                </div>
             </div>
         </main>
     );
