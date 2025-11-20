@@ -5,8 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { AnalyzeResponse } from "@/types/analyze";
 import ResultsPanel from "@/components/ResultPanel";
-import { getHashKey } from "@/utils/hash";
-import { getCache, setCache } from "@/utils/cache";
+import { getCache } from "@/utils/cache";
 
 export default function ResumeAnalyzePage() {
     const router = useRouter();
@@ -35,13 +34,13 @@ export default function ResumeAnalyzePage() {
             setResult(JSON.parse(stored).value);
         }
 
-        const rawHistory = localStorage.getItem("analysis_history");
+        const rawHistory = getCache("analysis_history");
         if (rawHistory) {
             setHistory(JSON.parse(rawHistory));
         }
 
         // Load original resume text from localStorage (if stored before)
-        const resumeText = localStorage.getItem("resume_text");
+        const resumeText = getCache("resume_text");
         if (!resumeText) alert("Resume text not found");
         else setResumeText(resumeText);
 

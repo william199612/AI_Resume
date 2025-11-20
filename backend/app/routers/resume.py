@@ -38,10 +38,12 @@ async def analyze_resume(
     return response
 
 @router.post("/rewrite", response_model=RewriteResponse)
-async def rewrite_resume_for_role(resume_text: str, target_role: str):
+async def rewrite_resume_for_role(payload: dict):
     """
     Rewrite uploaded resume for a specific job role.
     """
+    resume_text = payload.get("resume_text")
+    target_role = payload.get("target_role")
     if not resume_text or not target_role:
         raise HTTPException(
             status_code=400,
