@@ -7,11 +7,13 @@ class AnalyzeRequest(BaseModel):
     job_description: Optional[str] = None
 
 class AnalyzeResponse(BaseModel):
+    original_resume_text: str
     match_score: float | None
     extracted_skills: List[str]
     summary: str
     improvement_areas: List[str]
     missing_keywords: List[str]
+    status: str
 
 class ContactInfo(BaseModel):
     name: Optional[str] = ""

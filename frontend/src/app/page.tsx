@@ -3,17 +3,40 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { getHashKey } from "@/utils/hash";
+import { getCache, setCache } from "@/utils/cache";
+
 export default function Home() {
     const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [jobDescription, setJobDescription] = useState<string>("");
     const [loading, setLoading] = useState(false);
-
-    const [history, setHistory] = useState<{ ts: number; score: number }[]>([]);
+    const [history, setHistory] = useState<
+        { timestamp: number; score: number }[]
+    >([]);
 
     useEffect(() => {
         const raw = localStorage.getItem("analysis_history");
         if (raw) setHistory(JSON.parse(raw));
+
+        const localFile = localStorage.getItem("resume_file_data");
+        if (localFile) {
+            const byteCharacters = atob(localFile);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray]);
+            const file = new File(
+                [blob],
+                localStorage.getItem("resume_file_name") || "resume.pdf"
+            );
+            setFile(file);
+        }
+
+        const localJD = localStorage.getItem("target_role");
+        if (localJD) setJobDescription(localJD);
     }, []);
 
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,36 +69,42 @@ export default function Home() {
 
         try {
             setLoading(true);
-            const res = await fetch("/api/analyze", {
-                method: "POST",
-                body: formData,
-            });
+            const key = await getHashKey(file, jobDescription);
+            const cachedResult = getCache(`analyze_${key}`);
 
-            if (!res.ok) throw new Error("Failed to analyze resume.");
-            const data = await res.json();
+            if (!cachedResult) {
+                const res = await fetch("/api/analyze", {
+                    method: "POST",
+                    body: formData,
+                });
 
-            // Save data temporarily for the analyze page
-            const id = Date.now().toString();
-            localStorage.setItem(`analyze_${id}`, JSON.stringify(data));
+                if (!res.ok) throw new Error("Failed to analyze resume.");
+                const data = await res.json();
 
-            // Save target role in localStorage (if user entered job description)
-            if (jobDescription) {
-                localStorage.setItem(`target_role_${id}`, jobDescription);
+                // Save data temporarily for the analyze page
+                setCache(`analyze_${key}`, data, 120);
+                // set the resume text individually
+                setCache(`resume_text`, data.original_resume_text, 120);
+
+                // Save target role in localStorage (if user entered job description)
+                if (jobDescription) {
+                    localStorage.setItem("target_role", jobDescription);
+                }
+
+                // Update history for home page persistence
+                const nextHistory = [
+                    ...history,
+                    { timestamp: Date.now(), score: data.match_score },
+                ].slice(-20);
+                setHistory(nextHistory);
+                localStorage.setItem(
+                    "analysis_history",
+                    JSON.stringify(nextHistory)
+                );
             }
 
-            // Update history for home page persistence
-            const nextHistory = [
-                ...history,
-                { ts: Date.now(), score: 0 },
-            ].slice(-20);
-            setHistory(nextHistory);
-            localStorage.setItem(
-                "analysis_history",
-                JSON.stringify(nextHistory)
-            );
-
             // Navigate to analyze page
-            router.push(`/resume_analyze?id=${id}`);
+            router.push(`/resume_analyze?id=${key}`);
         } catch (err) {
             console.error(err);
             alert("Error analyzing resume. Please try again.");
@@ -83,6 +112,19 @@ export default function Home() {
             setLoading(false);
         }
     };
+
+    if (loading) {
+        return (
+            <main className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+                    <p className="ml-3 text-blue-700 font-semibold">
+                        Loading analysis results...
+                    </p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-6">

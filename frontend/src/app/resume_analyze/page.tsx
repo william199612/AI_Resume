@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { AnalyzeResponse } from "@/types/analyze";
 import ResultsPanel from "@/components/ResultPanel";
+import { getCache } from "@/utils/cache";
 
 export default function ResumeAnalyzePage() {
     const router = useRouter();
@@ -12,11 +13,14 @@ export default function ResumeAnalyzePage() {
     const id = searchParams.get("id");
 
     const [result, setResult] = useState<AnalyzeResponse | null>(null);
-    const [targetRole, setTargetRole] = useState<string>("");
-    const [history, setHistory] = useState<{ ts: number; score: number }[]>([]);
+    const [history, setHistory] = useState<
+        { timestamp: number; score: number }[]
+    >([]);
     const [loading, setLoading] = useState(true);
     const [optimizing, setOptimizing] = useState(false);
-    const [file, setFile] = useState<File | null>(null);
+    const [resumeText, setResumeText] = useState<string>("");
+    const [jobDescription, setJobDescription] = useState<string>("");
+    const [showJDInput, setShowJDInput] = useState<boolean>(false);
 
     useEffect(() => {
         if (!id) {
@@ -27,51 +31,48 @@ export default function ResumeAnalyzePage() {
         // Fetch from localStorage
         const stored = localStorage.getItem(`analyze_${id}`);
         if (stored) {
-            setResult(JSON.parse(stored));
+            setResult(JSON.parse(stored).value);
         }
 
-        // Load target role if exists
-        const storedRole = localStorage.getItem(`target_role_${id}`);
-        if (storedRole) {
-            setTargetRole(storedRole);
-        }
-
-        const rawHistory = localStorage.getItem("analysis_history");
+        const rawHistory = getCache("analysis_history");
         if (rawHistory) {
             setHistory(JSON.parse(rawHistory));
         }
 
-        // Load original uploaded file from localStorage (if stored before)
-        const storedFileName = localStorage.getItem(`resume_file_name`);
-        const storedFileData = localStorage.getItem(`resume_file_data`);
-        if (storedFileName && storedFileData) {
-            const blob = new Blob([
-                Uint8Array.from(atob(storedFileData), (c) => c.charCodeAt(0)),
-            ]);
-            setFile(new File([blob], storedFileName));
-        }
+        // Load original resume text from localStorage (if stored before)
+        const resumeText = getCache("resume_text");
+        if (!resumeText) alert("Resume text not found");
+        else setResumeText(resumeText);
+
+        const targetRole = localStorage.getItem("target_role");
+        if (targetRole) setJobDescription(targetRole);
+        else setShowJDInput(true);
 
         setLoading(false);
     }, [id, router]);
 
-    const handleOptimize = async (target_role: string) => {
+    const handleOptimize = async () => {
         try {
             setOptimizing(true);
-            if (!file) return alert("Please upload your resume file.");
+            if (!resumeText) return alert("Resume text not found.");
 
-            const formData = new FormData();
-            formData.append("file", file);
+            const payload: Record<string, any> = {
+                resume_text: resumeText,
+            };
 
-            if (target_role) {
-                formData.append("target_role", target_role);
+            if (jobDescription) {
+                payload.target_role = jobDescription;
             } else {
-                alert("Please provide a target role.");
+                alert("Please provide a target role to proceed.");
                 return;
             }
 
             const res = await fetch("/api/rewrite", {
                 method: "POST",
-                body: formData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
@@ -139,9 +140,25 @@ export default function ResumeAnalyzePage() {
 
                 <ResultsPanel result={result} history={history} />
 
+                {/* --- Job Description --- */}
+                {showJDInput && (
+                    <div>
+                        <h2 className="block font-medium text-gray-700 mb-2">
+                            Desired Job Description
+                        </h2>
+                        <textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            rows={4}
+                            className="w-full border border-gray-300 p-2 rounded-lg mt-3 text-gray-600 bg-gray-50 focus:bg-white"
+                            placeholder="Paste job description here..."
+                        />
+                    </div>
+                )}
+
                 <div className="text-right mt-6">
                     <button
-                        onClick={() => handleOptimize(targetRole)}
+                        onClick={handleOptimize}
                         disabled={optimizing}
                         className={`px-4 py-2 rounded-md text-white transition ${
                             optimizing

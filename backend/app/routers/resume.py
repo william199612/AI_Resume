@@ -1,6 +1,6 @@
 # app/routers/resume.py
 from typing import Optional
-from fastapi import APIRouter, UploadFile, Form
+from fastapi import APIRouter, UploadFile, Form, HTTPException
 
 from app.services.text_extractor import extract_text
 from app.services.ai import suggest_improvements, rewrite_resume
@@ -26,6 +26,7 @@ async def analyze_resume(
     ai_suggestions = suggest_improvements(resume_text, job_description or "")
     
     response = {
+        "original_resume_text": resume_text,
         "summary": ai_suggestions.get("summary", "No summary available"),
         "extracted_skills": ai_suggestions.get("extracted_skills", []),
         "match_score": ai_suggestions.get("match_score", None),
@@ -37,11 +38,17 @@ async def analyze_resume(
     return response
 
 @router.post("/rewrite", response_model=RewriteResponse)
-async def rewrite_resume_for_role(file: UploadFile, target_role: str = Form(...)):
+async def rewrite_resume_for_role(payload: dict):
     """
     Rewrite uploaded resume for a specific job role.
     """
-    resume_text = extract_text(file)
+    resume_text = payload.get("resume_text")
+    target_role = payload.get("target_role")
+    if not resume_text or not target_role:
+        raise HTTPException(
+            status_code=400,
+            detail="resume_text and target_role are required."
+        )
     rewritten = rewrite_resume(resume_text, target_role)
     
     contact_info = rewritten.get("contact_info", {})

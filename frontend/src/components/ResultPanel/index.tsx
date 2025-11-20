@@ -5,7 +5,7 @@ import HistoryChart from "./HistoryChart";
 
 type Props = {
     result: AnalyzeResponse;
-    history: { ts: number; score: number }[];
+    history: { timestamp: number; score: number }[];
 };
 
 export default function ResultsPanel({ result, history }: Props) {
