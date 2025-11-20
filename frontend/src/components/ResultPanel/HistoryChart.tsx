@@ -19,7 +19,7 @@ ChartJS.register(
 );
 
 type Props = {
-    history: { ts: number; score: number }[]; // ts epoch, score 0..1
+    history: { timestamp: number; score: number }[]; // timestamp epoch, score 0..1
 };
 
 export default function HistoryChart({ history }: Props) {
@@ -29,7 +29,7 @@ export default function HistoryChart({ history }: Props) {
         );
     }
 
-    const labels = history.map((h) => new Date(h.ts).toLocaleString());
+    const labels = history.map((h) => new Date(h.timestamp).toLocaleString());
     const data = {
         labels,
         datasets: [

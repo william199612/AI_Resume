@@ -4,12 +4,15 @@ export const runtime = "nodejs"; // ensure server-side only
 
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
+        const { resume_text, target_role } = await req.json();
 
         // Forward file and job description to FastAPI
         const backendRes = await fetch("http://localhost:8000/api/rewrite", {
             method: "POST",
-            body: formData, // Forward as-is
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ resume_text, target_role }),
         });
 
         if (!backendRes.ok) {
