@@ -177,7 +177,7 @@ export default function ResumeEditor({
 
                             {/* Editable Skills */}
                             <ul className="list-disc list-inside space-y-1">
-                                {skills.map((skill, index) => (
+                                {skills.map((skill: string, index: number) => (
                                     <li key={index}>
                                         <ContentEditable
                                             html={skill}
