@@ -194,7 +194,7 @@ export default function ResumeEditor({
                                             }}
                                             onBlur={handleBlur}
                                             tagName="span"
-                                            className="text-sm text-slate-700 hover:bg-blue-50 rounded px-1"
+                                            className={`text-sm text-slate-500 font-medium ${editableClass}`}
                                         />
                                     </li>
                                 ))}
@@ -241,7 +241,7 @@ export default function ResumeEditor({
                                     onBlur={handleBlur}
                                     tagName="span"
                                     className={`text-sm text-slate-500 font-medium ${editableClass}`}
-                                    placeholder="Jan 2020 - Present"
+                                    placeholder="Enter your dates here"
                                 />
                             </div>
 
