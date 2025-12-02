@@ -1,6 +1,6 @@
 # app/schemas/resume.py
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 class AnalyzeRequest(BaseModel):
     use_job_description: bool
@@ -34,6 +34,11 @@ class EducationItem(BaseModel):
     dates: Optional[str] = ""
     details: Optional[str] = ""
 
+class SkillCategory(BaseModel):
+    technical: List[str]
+    tools: List[str]
+    soft_skills: List[str]
+
 class ProjectItem(BaseModel):
     name: Optional[str] = ""
     description: Optional[str] = ""
@@ -44,6 +49,6 @@ class RewriteResponse(BaseModel):
     summary: str
     experience: List[ExperienceItem]
     education: List[EducationItem]
-    skills: List[str]
+    skills: SkillCategory
     projects: List[ProjectItem]
     full_text: str

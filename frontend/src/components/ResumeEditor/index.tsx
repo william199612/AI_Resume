@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
+import ContentEditable from "react-contenteditable";
 import { Mail, Phone, Linkedin, MapPin, Link as LinkIcon } from "lucide-react";
 import { RewriteResponse, EditableResumeProps } from "@/types/analyze";
 
@@ -20,7 +20,7 @@ export default function ResumeEditor({
     const handleChange = (section: keyof RewriteResponse, value: any) => {
         const newData = { ...resume, [section]: value };
         setResume(newData);
-        // We only trigger the parent update on Blur to prevent excessive saving
+        // only trigger the parent update on Blur to prevent excessive saving
     };
 
     // Helper: Trigger parent save on blur
@@ -53,6 +53,13 @@ export default function ResumeEditor({
 
         const newData = { ...resume, [section]: list };
         setResume(newData);
+    };
+
+    const capitalizeFirstLetter = (str: string): string => {
+        if (str.length === 0) {
+            return "";
+        }
+        return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
     // Common styles for editable fields
@@ -155,27 +162,45 @@ export default function ResumeEditor({
             {/* SKILLS */}
             <section className="mb-8">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-3 pb-1">
-                    Technical Skills
+                    Skills
                 </h2>
-                <ContentEditable
-                    html={
-                        Array.isArray(resume.skills)
-                            ? resume.skills.join(", ")
-                            : ""
-                    }
-                    onChange={(e) => {
-                        // Split string back into array
-                        const skillsArray = e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter((s) => s);
-                        handleChange("skills", skillsArray);
-                    }}
-                    onBlur={handleBlur}
-                    tagName="div"
-                    className={`text-sm text-slate-700 ${editableClass}`}
-                    placeholder="React, TypeScript, Node.js..."
-                />
+
+                {resume.skills &&
+                    Object.entries(resume.skills).map(([category, skills]) => (
+                        <div key={category} className="mb-4">
+                            {/* Category Label */}
+                            <div className="text-base font-semibold text-slate-500 mb-1 capitalize">
+                                {capitalizeFirstLetter(
+                                    category.replace("_", " ")
+                                )}
+                            </div>
+
+                            {/* Editable Skills */}
+                            <ul className="list-disc list-inside space-y-1">
+                                {skills.map((skill, index) => (
+                                    <li key={index}>
+                                        <ContentEditable
+                                            html={skill}
+                                            onChange={(e) => {
+                                                const updatedSkills = [
+                                                    ...skills,
+                                                ];
+                                                updatedSkills[index] =
+                                                    e.target.value;
+                                                handleChange("skills", {
+                                                    ...resume.skills,
+                                                    [category]: updatedSkills,
+                                                });
+                                            }}
+                                            onBlur={handleBlur}
+                                            tagName="span"
+                                            className="text-sm text-slate-700 hover:bg-blue-50 rounded px-1"
+                                        />
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
             </section>
 
             {/* EXPERIENCE */}

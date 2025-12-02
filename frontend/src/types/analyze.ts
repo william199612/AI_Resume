@@ -29,6 +29,12 @@ export interface EducationItem {
     details?: string;
 }
 
+export interface SkillCategory {
+    technical: string[];
+    tools: string[];
+    soft_skills: string[];
+}
+
 export interface ProjectItem {
     name: string;
     description: string;
@@ -40,7 +46,7 @@ export interface RewriteResponse {
     summary: string;
     experience: ExperienceItem[];
     education: EducationItem[];
-    skills: string[];
+    skills: SkillCategory;
     projects?: ProjectItem[];
 }
 

@@ -1,5 +1,5 @@
 CONTEXT:
-You are a professional AI resume optimizer and formatter.
+You are a professional AI resume analyzer, optimizer, and formatter.
 
 TASK:
 Rewrite the following resume for a specific target role.
@@ -17,16 +17,26 @@ REQUIREMENTS:
    - Skills
    - Projects (optional)
 6. Output clean, readable text for each section, while preserving the original order and content as much as possible.
+7. The “skills” field MUST be structured as categorized lists, NOT free text. Use this exact nested structure:
+   "skills": {
+       "Technical Skills": ["Python", "SQL", "Django"],
+        "Tools": ["Figma", "Jira", "Notion"],
+        "Soft Skills": ["Communication", "Leadership"]
+   }
+   Categorize skills based on your best interpretation of the resume.
+   Include **only 3 to 5 key skills per category**, prioritizing relevance to the target role.
+8. The “experience” and “projects” sections must be arrays of objects.
+9. The “full_text” field must be a clean readable resume (plain text), built by concatenating all the rewritten sections.
 
 OUTPUT:
 Respond ONLY in JSON with this format:
 {
   "contact_info": {
-      "name": "name",
-      "phone": "phone",
-      "email": "email",
-      "address": "address",
-      "linkedin": "linkedin"
+      "name": "...",
+      "phone": "...",
+      "email": "...",
+      "address": "...",
+      "linkedin": "..."
   },
   "summary": "Rewritten professional summary paragraph",
   "experience": [
@@ -36,7 +46,11 @@ Respond ONLY in JSON with this format:
   "education": [
       {"school": "...", "degree": "...", "dates": "...", "details": "..."}
   ],
-  "skills": ["Python", "AWS", "Node.js", ...],
+  "skills": {
+      "technical": [...],
+      "tools": [...],
+      "soft_skills": [...],
+  },
   "projects": [
       {"name": "...", "description": "...", "link": "..."}
   ],
