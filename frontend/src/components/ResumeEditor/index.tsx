@@ -1,172 +1,404 @@
 "use client";
 
-import { useState, useRef } from "react";
-import ContentEditable from "react-contenteditable";
+import { useState, useRef, useEffect } from "react";
+import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
+import { Mail, Phone, Linkedin, MapPin, Link as LinkIcon } from "lucide-react";
 import { RewriteResponse, EditableResumeProps } from "@/types/analyze";
 
-export default function ResumeEditor({ initialData }: EditableResumeProps) {
+export default function ResumeEditor({
+    initialData,
+    onUpdate,
+}: EditableResumeProps) {
     const [resume, setResume] = useState<RewriteResponse>(initialData);
     const resumeRef = useRef(resume);
 
-    const updateRef = (section: keyof RewriteResponse, value: any) => {
-        resumeRef.current = { ...resumeRef.current, [section]: value };
+    useEffect(() => {
+        resumeRef.current = resume;
+    }, [resume]);
+
+    // Helper: Handle generic text updates
+    const handleChange = (section: keyof RewriteResponse, value: any) => {
+        const newData = { ...resume, [section]: value };
+        setResume(newData);
+        // We only trigger the parent update on Blur to prevent excessive saving
     };
 
+    // Helper: Trigger parent save on blur
     const handleBlur = () => {
-        setResume({ ...resumeRef.current });
+        if (onUpdate) {
+            onUpdate(resumeRef.current);
+        }
     };
+
+    const handleContactUpdate = (
+        field: keyof typeof resume.contact_info,
+        value: string
+    ) => {
+        const newData = {
+            ...resume,
+            contact_info: { ...resume.contact_info, [field]: value },
+        };
+        setResume(newData);
+    };
+
+    // Helper: Nested updates for arrays (Experience, Education, Projects)
+    const handleArrayUpdate = (
+        section: "experience" | "education" | "projects",
+        index: number,
+        field: string,
+        value: string
+    ) => {
+        const list = [...(resume[section] || [])] as any[];
+        list[index] = { ...list[index], [field]: value };
+
+        const newData = { ...resume, [section]: list };
+        setResume(newData);
+    };
+
+    // Common styles for editable fields
+    const editableClass =
+        "hover:bg-blue-50 hover:outline-dashed hover:outline-1 hover:outline-blue-300 rounded px-1 -mx-1 transition-colors cursor-text empty:before:content-[attr(placeholder)] empty:before:text-gray-400 outline-none focus:bg-blue-50 focus:ring-2 focus:ring-blue-200";
 
     return (
-        <div className="space-y-6 bg-white p-6 rounded-lg shadow-lg">
-            {/* CONTACT INFO */}
-            <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Contact Info
-                </h3>
-                {Object.entries(resume.contact_info).map(([key, val]) => (
-                    <ContentEditable
-                        key={key}
-                        html={val || ""}
-                        onChange={(e) => {
-                            const updated = {
-                                ...resumeRef.current.contact_info,
-                                [key]: e.target.value,
-                            };
-                            updateRef("contact_info", updated);
-                        }}
-                        onBlur={handleBlur}
-                        className="p-2 mb-1 rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                ))}
-            </section>
+        <div className="w-full max-w-[210mm] mx-auto bg-white shadow-2xl mb-10 min-h-[297mm] p-[15mm] md:p-[20mm] text-slate-800 font-sans leading-relaxed print:shadow-none print:p-0 print:max-w-full">
+            {/* HEADER / CONTACT */}
+            <header className="border-b-2 border-slate-800 pb-6 mb-6 text-center">
+                <ContentEditable
+                    html={resume.contact_info.name || ""}
+                    onChange={(e) =>
+                        handleContactUpdate("name", e.target.value)
+                    }
+                    onBlur={handleBlur}
+                    tagName="h1"
+                    className={`text-4xl font-extrabold text-slate-900 uppercase tracking-tight mb-2 ${editableClass}`}
+                    placeholder="YOUR NAME"
+                />
+
+                <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600 mt-3">
+                    {/* Email */}
+                    <div className="flex items-center gap-1">
+                        <Mail size={14} />
+                        <ContentEditable
+                            html={resume.contact_info.email || ""}
+                            onChange={(e) =>
+                                handleContactUpdate("email", e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            tagName="span"
+                            className={editableClass}
+                            placeholder="email@example.com"
+                        />
+                    </div>
+
+                    {/* Phone */}
+                    <div className="flex items-center gap-1">
+                        <Phone size={14} />
+                        <ContentEditable
+                            html={resume.contact_info.phone || ""}
+                            onChange={(e) =>
+                                handleContactUpdate("phone", e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            tagName="span"
+                            className={editableClass}
+                            placeholder="+1 234 567 890"
+                        />
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex items-center gap-1">
+                        <MapPin size={14} />
+                        <ContentEditable
+                            html={resume.contact_info.address || ""}
+                            onChange={(e) =>
+                                handleContactUpdate("address", e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            tagName="span"
+                            className={editableClass}
+                            placeholder="City, Country"
+                        />
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div className="flex items-center gap-1">
+                        <Linkedin size={14} />
+                        <ContentEditable
+                            html={resume.contact_info.linkedin || ""}
+                            onChange={(e) =>
+                                handleContactUpdate("linkedin", e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            tagName="span"
+                            className={editableClass}
+                            placeholder="linkedin.com/in/username"
+                        />
+                    </div>
+                </div>
+            </header>
 
             {/* SUMMARY */}
-            <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Summary
-                </h3>
+            <section className="mb-8">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-3 pb-1">
+                    Professional Summary
+                </h2>
                 <ContentEditable
                     html={resume.summary || ""}
-                    onChange={(e) => updateRef("summary", e.target.value)}
+                    onChange={(e) => handleChange("summary", e.target.value)}
                     onBlur={handleBlur}
-                    className="p-2 rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    tagName="p"
+                    className={`text-sm text-slate-700 leading-6 text-justify ${editableClass}`}
+                    placeholder="Write a compelling summary..."
+                />
+            </section>
+
+            {/* SKILLS */}
+            <section className="mb-8">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-3 pb-1">
+                    Technical Skills
+                </h2>
+                <ContentEditable
+                    html={
+                        Array.isArray(resume.skills)
+                            ? resume.skills.join(", ")
+                            : ""
+                    }
+                    onChange={(e) => {
+                        // Split string back into array
+                        const skillsArray = e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter((s) => s);
+                        handleChange("skills", skillsArray);
+                    }}
+                    onBlur={handleBlur}
+                    tagName="div"
+                    className={`text-sm text-slate-700 ${editableClass}`}
+                    placeholder="React, TypeScript, Node.js..."
                 />
             </section>
 
             {/* EXPERIENCE */}
-            <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <section className="mb-8">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-4 pb-1">
                     Experience
-                </h3>
-                {resume.experience.map((exp, idx) => (
-                    <div
-                        key={idx}
-                        className="p-2 my-2 rounded-md border border-gray-300 bg-white"
-                    >
-                        {Object.entries(exp).map(([key, val]) => (
-                            <ContentEditable
-                                key={key}
-                                html={val || ""}
-                                onChange={(e) => {
-                                    const updatedExperience = [
-                                        ...resumeRef.current.experience,
-                                    ];
-                                    updatedExperience[idx] = {
-                                        ...updatedExperience[idx],
-                                        [key]: e.target.value,
-                                    };
-                                    updateRef("experience", updatedExperience);
-                                }}
-                                onBlur={handleBlur}
-                                className="p-1 mb-1 rounded-sm border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                            />
-                        ))}
-                    </div>
-                ))}
-            </section>
+                </h2>
+                <div className="space-y-6">
+                    {resume.experience.map((exp, idx) => (
+                        <div key={idx} className="group">
+                            {/* Header: Company & Date */}
+                            <div className="flex justify-between items-baseline mb-1">
+                                <ContentEditable
+                                    html={exp.company || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "experience",
+                                            idx,
+                                            "company",
+                                            e.target.value
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    tagName="h3"
+                                    className={`font-bold text-slate-800 text-base ${editableClass}`}
+                                    placeholder="Company Name"
+                                />
+                                <ContentEditable
+                                    html={exp.dates || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "experience",
+                                            idx,
+                                            "dates",
+                                            e.target.value
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    tagName="span"
+                                    className={`text-sm text-slate-500 font-medium ${editableClass}`}
+                                    placeholder="Jan 2020 - Present"
+                                />
+                            </div>
 
-            {/* EDUCATION */}
-            <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Education
-                </h3>
-                {resume.education.map((edu, idx) => (
-                    <div
-                        key={idx}
-                        className="p-2 my-2 rounded-md border border-gray-300 bg-white"
-                    >
-                        {Object.entries(edu).map(([key, val]) => (
+                            {/* Title */}
                             <ContentEditable
-                                key={key}
-                                html={val || ""}
-                                onChange={(e) => {
-                                    const updatedEducation = [
-                                        ...resumeRef.current.education,
-                                    ];
-                                    updatedEducation[idx] = {
-                                        ...updatedEducation[idx],
-                                        [key]: e.target.value,
-                                    };
-                                    updateRef("education", updatedEducation);
-                                }}
+                                html={exp.title || ""}
+                                onChange={(e) =>
+                                    handleArrayUpdate(
+                                        "experience",
+                                        idx,
+                                        "title",
+                                        e.target.value
+                                    )
+                                }
                                 onBlur={handleBlur}
-                                className="p-1 mb-1 rounded-sm border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                tagName="div"
+                                className={`text-sm font-semibold text-blue-700 mb-2 ${editableClass}`}
+                                placeholder="Job Title"
                             />
-                        ))}
-                    </div>
-                ))}
-            </section>
 
-            {/* SKILLS */}
-            <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Skills</h3>
-                <ContentEditable
-                    html={resume.skills.join(", ")}
-                    onChange={(e) =>
-                        updateRef(
-                            "skills",
-                            e.target.value.split(",").map((s) => s.trim())
-                        )
-                    }
-                    onBlur={handleBlur}
-                    className="p-2 rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                            {/* Details */}
+                            <ContentEditable
+                                html={exp.details || ""}
+                                onChange={(e) =>
+                                    handleArrayUpdate(
+                                        "experience",
+                                        idx,
+                                        "details",
+                                        e.target.value
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                tagName="div"
+                                className={`text-sm text-slate-700 leading-relaxed whitespace-pre-wrap ${editableClass}`}
+                                placeholder="Describe your responsibilities and achievements..."
+                            />
+                        </div>
+                    ))}
+                </div>
             </section>
 
             {/* PROJECTS */}
-            {(resume.projects ?? []).length > 0 && (
-                <section>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+            {resume.projects && resume.projects.length > 0 && (
+                <section className="mb-8">
+                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-4 pb-1">
                         Projects
-                    </h3>
-                    {(resume.projects ?? []).map((proj, idx) => (
-                        <div
-                            key={idx}
-                            className="p-2 my-2 rounded-md border border-gray-300 bg-white"
-                        >
-                            {Object.entries(proj).map(([key, val]) => (
+                    </h2>
+                    <div className="space-y-5">
+                        {resume.projects.map((proj, idx) => (
+                            <div key={idx}>
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <ContentEditable
+                                        html={proj.name || ""}
+                                        onChange={(e) =>
+                                            handleArrayUpdate(
+                                                "projects",
+                                                idx,
+                                                "name",
+                                                e.target.value
+                                            )
+                                        }
+                                        onBlur={handleBlur}
+                                        tagName="h3"
+                                        className={`font-bold text-slate-800 text-sm ${editableClass}`}
+                                        placeholder="Project Name"
+                                    />
+                                    <div className="flex items-center gap-1 text-slate-500">
+                                        {proj.link && <LinkIcon size={12} />}
+                                        <ContentEditable
+                                            html={proj.link || ""}
+                                            onChange={(e) =>
+                                                handleArrayUpdate(
+                                                    "projects",
+                                                    idx,
+                                                    "link",
+                                                    e.target.value
+                                                )
+                                            }
+                                            onBlur={handleBlur}
+                                            tagName="span"
+                                            className={`text-xs italic ${editableClass}`}
+                                            placeholder="Link (optional)"
+                                        />
+                                    </div>
+                                </div>
                                 <ContentEditable
-                                    key={key}
-                                    html={val || ""}
-                                    onChange={(e) => {
-                                        const updatedProjects = [
-                                            ...((resumeRef.current.projects ??
-                                                []) as any),
-                                        ];
-                                        updatedProjects[idx] = {
-                                            ...updatedProjects[idx],
-                                            [key]: e.target.value,
-                                        };
-                                        updateRef("projects", updatedProjects);
-                                    }}
+                                    html={proj.description || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "projects",
+                                            idx,
+                                            "description",
+                                            e.target.value
+                                        )
+                                    }
                                     onBlur={handleBlur}
-                                    className="p-1 mb-1 rounded-sm border border-gray-200 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                    tagName="div"
+                                    className={`text-sm text-slate-700 leading-relaxed ${editableClass}`}
+                                    placeholder="Project description..."
                                 />
-                            ))}
-                        </div>
-                    ))}
+                            </div>
+                        ))}
+                    </div>
                 </section>
             )}
+
+            {/* EDUCATION */}
+            <section>
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 mb-4 pb-1">
+                    Education
+                </h2>
+                <div className="space-y-4">
+                    {resume.education.map((edu, idx) => (
+                        <div key={idx}>
+                            <div className="flex justify-between items-baseline mb-1">
+                                <ContentEditable
+                                    html={edu.school || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "education",
+                                            idx,
+                                            "school",
+                                            e.target.value
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    tagName="h3"
+                                    className={`font-bold text-slate-800 text-sm ${editableClass}`}
+                                    placeholder="University / School"
+                                />
+                                <ContentEditable
+                                    html={edu.dates || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "education",
+                                            idx,
+                                            "dates",
+                                            e.target.value
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    tagName="span"
+                                    className={`text-sm text-slate-500 font-medium ${editableClass}`}
+                                    placeholder="Graduation Date"
+                                />
+                            </div>
+                            <ContentEditable
+                                html={edu.degree || ""}
+                                onChange={(e) =>
+                                    handleArrayUpdate(
+                                        "education",
+                                        idx,
+                                        "degree",
+                                        e.target.value
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                tagName="div"
+                                className={`text-sm text-slate-700 ${editableClass}`}
+                                placeholder="Degree / Major"
+                            />
+                            {edu.details && (
+                                <ContentEditable
+                                    html={edu.details || ""}
+                                    onChange={(e) =>
+                                        handleArrayUpdate(
+                                            "education",
+                                            idx,
+                                            "details",
+                                            e.target.value
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    tagName="div"
+                                    className={`text-xs text-slate-600 mt-1 ${editableClass}`}
+                                    placeholder="Additional details..."
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }

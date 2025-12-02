@@ -46,5 +46,5 @@ export interface RewriteResponse {
 
 export interface EditableResumeProps {
     initialData: RewriteResponse;
-    onChange?: (updated: RewriteResponse) => void;
+    onUpdate?: (data: RewriteResponse) => void;
 }
