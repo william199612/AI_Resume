@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+    eatzy_fe_runtime:
+        image: eatzy_fe_runtime
+        build:
+            context: ./frontend/docker
+        command: ["/bin/true"]
+
+    eatzy_be_runtime:
+        image: eatzy_be_runtime
+        build:
+            context: ./backend/docker
+        command: ["/bin/true"]
+
+    eatzy_frontend:
+        image: eatzy_fe_runtime
+        working_dir: /app
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        command: sh -c "npm run dev --host 0.0.0.0"
+        environment:
+            NODE_ENV: development
+        depends_on:
+            - eatzy_fe_runtime
+            - eatzy_backend
+        restart: unless-stopped
+
+    eatzy_backend:
+        image: eatzy_be_runtime
+        working_dir: /app
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./backend:/app
+            - /app/node_modules
+        command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+        environment:
+            NODE_ENV: development
+        depends_on:
+            - eatzy_be_runtime
+        restart: unless-stopped
